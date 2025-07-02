@@ -1,13 +1,65 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ja">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
+    <title>image-format-app</title>
   </head>
   <body>
-    <div id="app"></div>
+    <main>
+      <h1>画像フォーマット変換</h1>
+      <section id="toolbar">
+        <h2 id="toolbar-title">操作パネル</h2>
+        <div id="select-div">
+          <label for="image-input">画像を選択</label>
+          <input id="image-input" type="file" multiple accept="image/*" />
+        </div>
+        <div id="format-div">
+          <label for="format-select">フォーマットを選択</label>
+          <select name="format" id="format-all-select">
+            <option value="jpeg">JPEG</option>
+            <option value="png">PNG</option>
+            <option value="webp">WebP</option>
+            <option value="bmp">BMP</option>
+          </select>
+        </div>
+        <button id="convert-all-button" type="button">一括変換</button>
+      </section>
+      <section id="image-list-section">
+        <h2 id="list-title">ファイルリスト</h2>
+        <div id="bulk-actions">
+          <button id="download-all-button" type="button" class="hidden">
+            一括ダウンロード(ZIP)
+          </button>
+          <button id="clear-all-button" type="button" class="hidden">すべてクリア</button>
+        </div>
+        <div id="image-list">
+          <p id="empty-message" class="hidden">画像ファイルを選択してください</p>
+          <div id="image-list-container" class="custom-ul"></div>
+        </div>
+      </section>
+    </main>
+    <template id="image-list-item-template">
+      <div class="custom-li image-list-item">
+        <span class="file-name"></span>
+        <div class="status-display"></div>
+        <div class="actions">
+          <label class="format-label"
+            >フォーマットを選択
+            <select name="format" class="format-select">
+              <option value="jpeg">JPEG</option>
+              <option value="png">PNG</option>
+              <option value="webp">WebP</option>
+              <option value="bmp">BMP</option>
+            </select>
+          </label>
+          <button class="convert-btn" type="button">変換</button>
+          <button class="download-btn hidden" type="button">ダウンロード</button>
+          <button class="delete-btn" type="button">削除</button>
+        </div>
+      </div>
+    </template>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
