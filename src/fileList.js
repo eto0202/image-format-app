@@ -1,4 +1,4 @@
-//新しい配列を作成
+//新しい状態管理用配列を作成
 let fileList = [];
 
 //選択されたファイルリストをファイルデータ配列に追加
@@ -27,4 +27,18 @@ export function getFileList() {
 //ファイルリストを更新
 export function setFileList(newFileList) {
   fileList = newFileList;
+}
+
+// ファイルリストからファイルを削除
+export function removeFile(targetFileID) {
+  console.log(targetFileID);
+  console.log(fileList);
+  // idがtargetFileIDと同じではない物をフィルタリング
+  fileList = fileList.filter((file) => file.id !== targetFileID);
+  console.log(fileList);
+}
+
+// 全てのファイルをリストから削除
+export function clearAllFiles() {
+  fileList = [];
 }

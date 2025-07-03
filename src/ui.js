@@ -1,4 +1,5 @@
 import * as dom from "./dom.js";
+import { getFileList } from "./fileList.js";
 
 // 選択されたファイルをもとにli要素を生成
 function createFilelistItem(fileinfo) {
@@ -54,3 +55,5 @@ export function renderFileList(containerElement, fileList) {
 
   containerElement.appendChild(fragment);
 }
+
+
