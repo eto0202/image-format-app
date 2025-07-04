@@ -28,17 +28,3 @@ export function getFileList() {
 export function setFileList(newFileList) {
   fileList = newFileList;
 }
-
-// ファイルリストからファイルを削除
-export function removeFile(targetFileID) {
-  console.log(targetFileID);
-  console.log(fileList);
-  // idがtargetFileIDと同じではない物をフィルタリング
-  fileList = fileList.filter((file) => file.id !== targetFileID);
-  console.log(fileList);
-}
-
-// 全てのファイルをリストから削除
-export function clearAllFiles() {
-  fileList = [];
-}

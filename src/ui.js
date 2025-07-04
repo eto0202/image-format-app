@@ -11,6 +11,7 @@ function createFilelistItem(fileinfo) {
 
   // ファイルのステータスに応じた表示内容を決定
   const statusDisplay = li.querySelector(".status-display");
+  const fileName = li.querySelector(".file-name");
   const convertBtnDisplay = li.querySelector(".convert-btn");
   const downloadBtnDisplay = li.querySelector(".download-btn");
   // ファイルの状態に応じたUI設定をオブジェクトで定義
@@ -34,7 +35,6 @@ function createFilelistItem(fileinfo) {
     statusDisplay.title = fileinfo.errorMessage;
     statusDisplay.classList.add("error");
   }
-
   // 各ボタンの表示を更新
   convertBtnDisplay.classList.toggle("hidden", !config.showConvert);
   downloadBtnDisplay.classList.toggle("hidden", !config.showDownload);
@@ -55,5 +55,3 @@ export function renderFileList(containerElement, fileList) {
 
   containerElement.appendChild(fragment);
 }
-
-

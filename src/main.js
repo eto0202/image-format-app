@@ -43,20 +43,132 @@ function handleFileSelect(event) {
   files.value = "";
 }
 
-// 削除ボタンが押されたときにclearFile()を実行
-function handleRemoveFile(event) {
-  const targtItem = event.target.closest(".image-list-item");
-  // datasetから取得したIDは文字列
-  const targetFileID = targtItem.dataset.id;
-  // targetFileIDは文字列のため、数値に変換してremoveFileに渡す
-  fileList.removeFile(parseFloat(targetFileID));
+// 個別操作
+async function handleActionFile(event) {
+  const target = event.target;
+  // 状態管理用配列を取得
+  const files = fileList.getFileList();
+  const targtItem = target.closest(".image-list-item");
+
+  if (!targtItem) return;
+
+  // datasetから取得したIDは文字列のため数値に変換
+  const targetFileID = parseFloat(targtItem.dataset.id);
+
+  // 変換ボタン
+  if (target.classList.contains("convert-btn")) {
+    // select要素からフォーマット形式を取得
+    const format = targtItem.querySelector(".format-select").value;
+    // 状態管理用配列から当該ファイルを取得
+    const targetFileInfo = files.find((file) => file.id === targetFileID);
+
+    // 配列にファイルが無い場合処理を中断
+    if (!targetFileInfo) return;
+
+    // 状態をconvertingに変更しUIを更新
+    const updatedFileList = files.map((file) => {
+      if (file.id === targetFileID) {
+        return {
+          ...file,
+          status: "converting",
+        };
+      } else {
+        return file;
+      }
+    });
+
+    // 新しい配列に更新
+    fileList.setFileList(updatedFileList);
+    updateUI();
+
+    // 変換を実行
+    try {
+      // awaitを使って変換処理が終わるのを待つ
+      const dataUrl = await convert.convertImage(targetFileInfo.originalFile, format);
+
+      // 変換終了後、再度最新のリストを取得して更新。
+      // 変換中に他の操作が行われる可能性があるため
+      const currentFiles = fileList.getFileList();
+      const newFileList = currentFiles.map((file) => {
+        if (file.id === targetFileID) {
+          // ファイル名の拡張子を変更
+          const newName = file.originalName.split(".").slice(0, -1).join(".") + `.${format}`;
+          return {
+            ...file,
+            status: "converted",
+            convertedDataUrl: dataUrl,
+            convertedName: newName,
+          };
+        }
+        return file;
+      });
+
+      // ファイルリストを更新
+      fileList.setFileList(newFileList);
+
+      // エラーハンドリング
+    } catch (error) {
+      const currentFiles = fileList.getFileList();
+      const newFileList = currentFiles.map((file) => {
+        if (file.id === targetFileID) {
+          return {
+            ...file,
+            status: "error",
+            errorMessage: error.message,
+          };
+        }
+        return file;
+      });
+
+      // ファイルリストを更新
+      fileList.setFileList(newFileList);
+    }
+  }
+
+  // ダウンロードボタン
+  if (target.classList.contains("download-btn")) {
+  }
+  // 削除ボタン
+  if (target.classList.contains("clear-btn")) {
+    // idがtargetFileIDと同じではない物をフィルタリング
+    const newFileList = files.filter((file) => file.id !== targetFileID);
+    // リストを更新
+    fileList.setFileList(newFileList);
+  }
+  // UIを更新
   updateUI();
+}
+
+// 一括操作関連
+function handleBulkAction(event) {
+  // 全てクリア
+  if (event.target === dom.clearAllBtn) {
+    const newFileList = [];
+    fileList.setFileList(newFileList);
+  }
+  // 全てダウンロード
+  if (event.target === dom.downloadAllBtn) {
+    // 状態管理用配列を取得
+    const files = fileList.getFileList();
+  }
+  updateUI();
+}
+
+// 全て変換
+function handleConvertAllFiles(event) {
+  if (event.target === dom.convertAllBtn) {
+    // 状態管理用配列を取得
+    const newFileList = fileList.getFileList();
+    convert.convertAllImage(newFileList);
+  }
 }
 
 // イベントリスナー関数
 function eventListener() {
   dom.imageInput.addEventListener("change", handleFileSelect);
-  dom.listContainer.addEventListener("click", handleRemoveFile);
+  dom.listContainer.addEventListener("click", handleActionFile);
+  dom.bulkAction.addEventListener("click", handleBulkAction);
+  dom.convertAllBtn.addEventListener("click", handleConvertAllFiles);
 }
 
 // 初期化用の関数
