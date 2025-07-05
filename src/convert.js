@@ -1,5 +1,5 @@
-// 画像の個別変換を行う非同期関数
-export async function convertImage(file, format) {
+// 画像のフォーファット変換を行う非同期関数
+export function convertImage(file, format) {
   return new Promise((resolve, reject) => {
     // ファイル形式のバリデーション
     if (!file.type.startsWith("image/")) {
@@ -42,4 +42,37 @@ export async function convertImage(file, format) {
 }
 
 // ファイルリスト全てを変換
-export async function convertAllImage(newFileList) {}
+export async function convertAllImage(newFileList, format) {
+  // convertingだけをフィルタリング
+  const targetToConvert = newFileList.filter((file) => file.status === "converting");
+  // 変換対象外のファイル
+  const other = newFileList.filter((file) => file.status !== "converting");
+
+  // 変換対象のファイルに対して、変換用Promiseを作成
+  const conversionPromises = targetToConvert.map(async (file) => {
+    try {
+      const dataUrl = await convertImage(file.originalFile, format);
+
+      // 変換成功後、新しいオブジェクトを返す
+      return {
+        ...file,
+        status: "converted",
+        convertedDataUrl: dataUrl,
+        convertedName: file.originalName.split(".").slice(0, -1).join(".") + `.${format}`,
+      };
+    } catch (error) {
+      // status: ""error"ステータスが更新されたオブジェクトを返す
+      return {
+        ...file,
+        status: "error",
+        errorMessage: error.message,
+      };
+    }
+  });
+
+  // 全ての変換処理が終わるのを待つ
+  const convertedResult = await Promise.all(conversionPromises);
+
+  // 変換対象外と変換結果を結合
+  return [...other, ...convertedResult];
+}

@@ -50,7 +50,7 @@ async function handleActionFile(event) {
   const files = fileList.getFileList();
   const targtItem = target.closest(".image-list-item");
 
-  if (!targtItem) return;
+  if (!targtItem || target.classList.contains("format-select")) return;
 
   // datasetから取得したIDは文字列のため数値に変換
   const targetFileID = parseFloat(targtItem.dataset.id);
@@ -155,11 +155,36 @@ function handleBulkAction(event) {
 }
 
 // 全て変換
-function handleConvertAllFiles(event) {
+async function handleConvertAllFiles(event) {
   if (event.target === dom.convertAllBtn) {
     // 状態管理用配列を取得
-    const newFileList = fileList.getFileList();
-    convert.convertAllImage(newFileList);
+    const currentList = fileList.getFileList();
+    // フォーマット形式を取得
+    const format = dom.formatAllSelect.value;
+
+    // pendingのファイルを更新してUIを反映
+    // pendingが無い場合処理を終了
+    const filesToConvert = currentList.filter((file) => file.status === "pending");
+    if (filesToConvert.length === 0) {
+      return;
+    }
+
+    // ファイルのステータスを変更
+    const processingFiles = currentList.map((file) =>
+      file.status === "pending" ? { ...file, status: "converting" } : file
+    );
+
+    //UIを更新
+    fileList.setFileList(processingFiles);
+    updateUI();
+
+    // 一括変換処理を呼び出す
+    const newFileList = await convert.convertAllImage(processingFiles, format);
+
+    // リストを更新
+    console.log(newFileList);
+    fileList.setFileList(newFileList);
+    updateUI();
   }
 }
 
