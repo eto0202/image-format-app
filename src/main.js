@@ -1,6 +1,7 @@
 import * as dom from "./dom.js";
 import * as fileList from "./fileList.js";
 import * as convert from "./convert.js";
+import * as download from "./download.js";
 import { renderFileList } from "./ui.js";
 
 // データの変更
@@ -55,10 +56,11 @@ async function handleActionFile(event) {
   // datasetから取得したIDは文字列のため数値に変換
   const targetFileID = parseFloat(targtItem.dataset.id);
 
+  // select要素からフォーマット形式を取得
+  const format = targtItem.querySelector(".format-select").value;
+
   // 変換ボタン
   if (target.classList.contains("convert-btn")) {
-    // select要素からフォーマット形式を取得
-    const format = targtItem.querySelector(".format-select").value;
     // 状態管理用配列から当該ファイルを取得
     const targetFileInfo = files.find((file) => file.id === targetFileID);
 
@@ -92,6 +94,9 @@ async function handleActionFile(event) {
       const newFileList = currentFiles.map((file) => {
         if (file.id === targetFileID) {
           // ファイル名の拡張子を変更
+          // split('.') でファイル名を部分に分ける
+          // slice(0, -1) で拡張子部分を取り除く
+          // join('.') でファイル名部分を元に戻す
           const newName = file.originalName.split(".").slice(0, -1).join(".") + `.${format}`;
           return {
             ...file,
@@ -105,6 +110,7 @@ async function handleActionFile(event) {
 
       // ファイルリストを更新
       fileList.setFileList(newFileList);
+      updateUI();
 
       // エラーハンドリング
     } catch (error) {
@@ -122,36 +128,40 @@ async function handleActionFile(event) {
 
       // ファイルリストを更新
       fileList.setFileList(newFileList);
+      updateUI();
     }
   }
 
   // ダウンロードボタン
   if (target.classList.contains("download-btn")) {
+    const convertedFile = files.find((file) => file.id === targetFileID);
+    // ダウンロード実行
+    download.downloadImage(convertedFile, format);
   }
   // 削除ボタン
   if (target.classList.contains("clear-btn")) {
     // idがtargetFileIDと同じではない物をフィルタリング
-    const newFileList = files.filter((file) => file.id !== targetFileID);
+    const filteredFile = files.filter((file) => file.id !== targetFileID);
     // リストを更新
-    fileList.setFileList(newFileList);
+    fileList.setFileList(filteredFile);
+    updateUI();
   }
-  // UIを更新
-  updateUI();
 }
 
 // 一括操作関連
 function handleBulkAction(event) {
-  // 全てクリア
+  // 全て削除
   if (event.target === dom.clearAllBtn) {
     const newFileList = [];
     fileList.setFileList(newFileList);
+    updateUI();
   }
   // 全てダウンロード
   if (event.target === dom.downloadAllBtn) {
     // 状態管理用配列を取得
-    const files = fileList.getFileList();
+    const currentFiles = fileList.getFileList();
+    download.downloadFilesAsZip(currentFiles);
   }
-  updateUI();
 }
 
 // 全て変換

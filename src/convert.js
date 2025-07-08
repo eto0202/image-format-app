@@ -53,7 +53,7 @@ export async function convertAllImage(newFileList, format) {
     try {
       const dataUrl = await convertImage(file.originalFile, format);
 
-      // 変換成功後、新しいオブジェクトを返す
+      // 変換成功後、変換済みとして新しいオブジェクトを返す
       return {
         ...file,
         status: "converted",

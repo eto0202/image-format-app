@@ -10,5 +10,9 @@
   },
   "devDependencies": {
     "vite": "^7.0.0"
+  },
+  "dependencies": {
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.1"
   }
 }
