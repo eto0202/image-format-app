@@ -1,30 +1,57 @@
-//新しい状態管理用配列を作成
+// @ts-check
+/**
+ * ファイル情報オブジェクト
+ * @typedef {object} FileInfo
+ * @property {number} id - ファイルID
+ * @property {File} originalFile - 元のFileオブジェクト
+ * @property {string} originalName - 元のファイル名
+ * @property {"pending"|"converting"|"converted"|"error"} status - ファイルの現在の状態
+ * @property {string|null} convertedDataUrl - 変換後のデータURL
+ * @property {string|null} convertedName - 変換後のファイル名
+ * @property {string|null} errorMessage - エラーメッセージ
+ */
+
+/**
+ * ファイル情報リスト
+ * @type {FileInfo[]}
+ */
 let fileList = [];
 
-//選択されたファイルリストをファイルデータ配列に追加
-export function addFilesToList(newFiles) {
-  const files = Array.from(newFiles);
+/**
+ * 新しく選択されたFileのリストを、管理用のオブジェクト配列に変換し、既存リストに追加。
+ * @param {FileList} newSelectedFiles - input要素から取得したFileListオブジェクト。
+ */
+export function addFilesToList(newSelectedFiles) {
+  const files = Array.from(newSelectedFiles);
 
-  //mapを使って各ファイルを新しいオブジェクトに変換
-  const newfileOject = files.map((file) => ({
+  /**
+   * @type {FileInfo[]}
+   */
+  const newfileOjects = files.map((file) => ({
     id: Date.now() + Math.random(),
-    originalFile: file, // ユーザーが選択したFIleオブジェクト
-    originalName: file.name, // 元のファイル名
-    status: "pending", // 状態"pending","converting","converted","error"
-    convertedDataUrl: null, //変換後のデータURL
-    convertedName: null, //変換後のファイル名。元のファイル名+converted
+    originalFile: file,
+    originalName: file.name,
+    status: "pending",
+    convertedDataUrl: null,
+    convertedName: null,
     errorMessage: null,
   }));
 
-  fileList = [...fileList, ...newfileOject];
+  fileList = [...fileList, ...newfileOjects];
 }
 
-//現在のファイルリストを取得
+/**
+ * 現在のファイル情報リストを取得する
+ * @returns {FileInfo[]} ファイル情報オブジェトの配列
+ */
 export function getFileList() {
   return fileList;
 }
 
-//ファイルリストを更新
+/**
+ * ファイル情報リストを新しい配列で上書きする。
+ * @param {FileInfo[]} newFileList - 新しいファイル情報オブジェクトの配列
+ */
 export function setFileList(newFileList) {
   fileList = newFileList;
 }

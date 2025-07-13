@@ -11,35 +11,42 @@
     <title>image-format-app</title>
   </head>
   <body>
-    <main>
-      <h1>画像フォーマット変換</h1>
+    <main id="main-contents">
       <section id="toolbar">
-        <h2 id="toolbar-title">操作パネル</h2>
         <div id="select-div">
-          <label for="image-input">画像を選択</label>
-          <input id="image-input" type="file" multiple accept="image/*" />
+          <label for="image-select-input" class="image-select-btn">画像を選択</label>
+          <input
+            id="image-select-input"
+            style="display: none"
+            type="file"
+            multiple
+            accept="image/*"
+          />
         </div>
-        <div id="format-div">
-          <label for="format-select">フォーマットを選択</label>
-          <select name="format" id="format-all-select">
-            <option value="jpeg">JPEG</option>
-            <option value="png">PNG</option>
-            <option value="webp">WebP</option>
-            <option value="bmp">BMP</option>
-          </select>
-        </div>
+        <form id="format-input-form">
+          <fieldset>
+            <legend>フォーマットを選択</legend>
+            <input name="formatSelect" id="jpeg" type="radio" value="jpeg" checked />
+            <label for="jpeg">JPEG</label>
+            <input name="formatSelect" id="png" type="radio" value="png" />
+            <label for="png">PNG</label>
+            <input name="formatSelect" id="webp" type="radio" value="webp" />
+            <label for="webp">WebP</label>
+            <input name="formatSelect" id="bmp" type="radio" value="bmp" />
+            <label for="bmp">BMP</label>
+          </fieldset>
+        </form>
         <button id="convert-all-button" type="button">一括変換</button>
       </section>
       <section id="image-list-section">
         <h2 id="list-title">ファイルリスト</h2>
         <div id="bulk-actions">
-          <button id="download-all-button" type="button" class="hidden">
-            一括ダウンロード(ZIP)
-          </button>
-          <button id="clear-all-button" type="button">すべてクリア</button>
+          <button id="download-all-button" type="button">一括ダウンロード(ZIP)</button>
+          <button id="clear-all-button" type="button">すべて削除</button>
         </div>
+        <div id="border-aria"></div>
         <div id="image-list">
-          <p id="empty-message" class="hidden">画像ファイルを選択してください</p>
+          <p id="empty-message" class="">画像ファイルを選択してください</p>
           <div id="image-list-container" class="custom-ul"></div>
         </div>
       </section>
@@ -47,17 +54,21 @@
     <template id="image-list-item-template">
       <div class="custom-li image-list-item">
         <span class="file-name"></span>
-        <div class="status-display"></div>
+        <div class="status-aria">
+          <p class="status-display"></p>
+          <p class="converted-name hidden"></p>
+        </div>
         <div class="actions">
-          <label class="format-label"
-            >フォーマットを選択
+          <div class="format-wrap">
             <select name="format" class="format-select">
+              <option value="title" selected disabled>フォーマットを選択</option>
               <option value="jpeg">JPEG</option>
               <option value="png">PNG</option>
               <option value="webp">WebP</option>
               <option value="bmp">BMP</option>
             </select>
-          </label>
+            <span class="select-icon"></span>
+          </div>
           <button class="convert-btn" type="button">変換</button>
           <button class="download-btn hidden" type="button">ダウンロード</button>
           <button class="clear-btn" type="button">削除</button>

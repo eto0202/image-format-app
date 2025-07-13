@@ -1,8 +1,8 @@
+export const mainContents = document.getElementById("main-contents");
 export const toolBar = document.getElementById("toolbar");
-export const imageInput = document.getElementById("image-input");
-export const formatAllSelect = document.getElementById("format-all-select");
+export const imageInput = document.getElementById("image-select-input");
+export const formatInputForm = document.getElementById("format-input-form");
 export const convertAllBtn = document.getElementById("convert-all-button");
-export const bulkAction = document.getElementById("bulk-actions");
 export const downloadAllBtn = document.getElementById("download-all-button");
 export const clearAllBtn = document.getElementById("clear-all-button");
 export const imageList = document.getElementById("image-list");

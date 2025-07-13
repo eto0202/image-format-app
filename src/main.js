@@ -4,18 +4,18 @@ import * as convert from "./convert.js";
 import * as download from "./download.js";
 import { renderFileList } from "./ui.js";
 
-// データの変更
-// データとUIの同期。最新のデータをUIに反映
-// UIコンポーネントの表示制御
-
-// UIを更新する
+// @ts-check
+/**
+ * @typedef {import('./fileList.js').FileInfo} FileInfo
+ */
+/**
+ * 現在のファイルリストを更新し、UIを再描画する
+ */
 function updateUI() {
-  // 状態管理用配列を取得
   const currentList = fileList.getFileList();
-  // listContainerに現在の配列を反映
+
   renderFileList(dom.listContainer, currentList);
 
-  // 配列の中身に応じてlistContainerの表示を切り替える
   if (currentList.length === 0) {
     dom.emptyMessage.classList.remove("hidden");
     dom.listContainer.classList.add("hidden");
@@ -25,192 +25,162 @@ function updateUI() {
   }
 }
 
-// ファイルが選択されたときにaddFilesToList()を実行
+/**
+ * ファイル選択時に実行され、UI更新、inputを空にする
+ * @param {Event} event - イベントオブジェト
+ * @param {HTMLInputElement} event.target - イベントを発生させたinput要素
+ * @returns {void}
+ */
 function handleFileSelect(event) {
-  // input要素で選択されたファイルリストを取得
   const files = event.target.files;
-  // 一つも選択されなかった場合
   if (files.length === 0) {
     return;
   }
 
-  // 状態管理用リストにファイルを追加
   fileList.addFilesToList(files);
 
-  // UIを更新。状態管理用配列をもとにimage-list-containerに要素が生成される
   updateUI();
 
-  // inputの値をリセット
-  files.value = "";
+  event.target.value = "";
 }
 
-// 個別操作
+/**
+ * 各ファイル情報オブジェクトのステータスを更新し、UIを更新
+ * @param {number} targetFileID - datasetから取得したファイルID
+ * @param {'pending'|'converting'|'converted'|'error'} status - 変更先のステータス
+ * @param {{}} [data={}] - 変更するプロパティ。省略可能。
+ */
+function updateStatus(targetFileID, status, data = {}) {
+  const currentFiles = fileList.getFileList();
+  const newFileList = currentFiles.map((file) =>
+    file.id === targetFileID ? { ...file, status, ...data } : file
+  );
+  fileList.setFileList(newFileList);
+  updateUI();
+}
+
+/**
+ * 変換、ダウンロード、削除の個別操作を行う。
+ * イベント移譲を利用しており、クリックされた要素に応じて処理を分岐する。
+ * @param {MouseEvent} event - クリックイベントオブジェト
+ * @returns {void}
+ */
 async function handleActionFile(event) {
+  /** @type {HTMLElement}*/
   const target = event.target;
-  // 状態管理用配列を取得
   const files = fileList.getFileList();
   const targtItem = target.closest(".image-list-item");
 
   if (!targtItem || target.classList.contains("format-select")) return;
 
-  // datasetから取得したIDは文字列のため数値に変換
   const targetFileID = parseFloat(targtItem.dataset.id);
 
-  // select要素からフォーマット形式を取得
   const format = targtItem.querySelector(".format-select").value;
 
-  // 変換ボタン
+  // 変換ボタンの処理
   if (target.classList.contains("convert-btn")) {
-    // 状態管理用配列から当該ファイルを取得
+    if (format === "title") {
+      alert("formatを選択してください");
+      return;
+    }
+
     const targetFileInfo = files.find((file) => file.id === targetFileID);
 
-    // 配列にファイルが無い場合処理を中断
-    if (!targetFileInfo) return;
+    if (!targetFileInfo || targetFileInfo.status !== "pending") return;
 
-    // 状態をconvertingに変更しUIを更新
-    const updatedFileList = files.map((file) => {
-      if (file.id === targetFileID) {
-        return {
-          ...file,
-          status: "converting",
-        };
-      } else {
-        return file;
-      }
-    });
+    updateStatus(targetFileID, "converting");
 
-    // 新しい配列に更新
-    fileList.setFileList(updatedFileList);
-    updateUI();
-
-    // 変換を実行
     try {
-      // awaitを使って変換処理が終わるのを待つ
       const dataUrl = await convert.convertImage(targetFileInfo.originalFile, format);
+      const newName = targetFileInfo.originalName.split(".").slice(0, -1).join(".") + `.${format}`;
 
-      // 変換終了後、再度最新のリストを取得して更新。
-      // 変換中に他の操作が行われる可能性があるため
-      const currentFiles = fileList.getFileList();
-      const newFileList = currentFiles.map((file) => {
-        if (file.id === targetFileID) {
-          // ファイル名の拡張子を変更
-          // split('.') でファイル名を部分に分ける
-          // slice(0, -1) で拡張子部分を取り除く
-          // join('.') でファイル名部分を元に戻す
-          const newName = file.originalName.split(".").slice(0, -1).join(".") + `.${format}`;
-          return {
-            ...file,
-            status: "converted",
-            convertedDataUrl: dataUrl,
-            convertedName: newName,
-          };
-        }
-        return file;
+      updateStatus(targetFileID, "converted", {
+        convertedDataUrl: dataUrl,
+        convertedName: newName,
       });
-
-      // ファイルリストを更新
-      fileList.setFileList(newFileList);
-      updateUI();
-
-      // エラーハンドリング
     } catch (error) {
-      const currentFiles = fileList.getFileList();
-      const newFileList = currentFiles.map((file) => {
-        if (file.id === targetFileID) {
-          return {
-            ...file,
-            status: "error",
-            errorMessage: error.message,
-          };
-        }
-        return file;
-      });
-
-      // ファイルリストを更新
-      fileList.setFileList(newFileList);
-      updateUI();
+      updateStatus(targetFileID, "error", { errorMessage: error.message });
     }
+    return;
   }
 
-  // ダウンロードボタン
+  // ダウンロードボタンの処理
   if (target.classList.contains("download-btn")) {
     const convertedFile = files.find((file) => file.id === targetFileID);
-    // ダウンロード実行
-    download.downloadImage(convertedFile, format);
+    download.downloadImage(convertedFile);
+    return;
   }
-  // 削除ボタン
+
+  // 削除ボタンの処理
   if (target.classList.contains("clear-btn")) {
-    // idがtargetFileIDと同じではない物をフィルタリング
     const filteredFile = files.filter((file) => file.id !== targetFileID);
-    // リストを更新
+
     fileList.setFileList(filteredFile);
-    updateUI();
   }
+
+  updateUI();
 }
 
-// 一括操作関連
-function handleBulkAction(event) {
-  // 全て削除
+/**
+ * 削除、ダウンロード、変換を一括で行う
+ * イベント移譲を利用しており、クリックされた要素に応じて処理を分岐する。
+ * @param {MouseEvent} event クリックイベントオブジェクト
+ * @returns {Promise<void>}
+ */
+async function handleBulkAction(event) {
+  // 削除ボタンの処理
   if (event.target === dom.clearAllBtn) {
     const newFileList = [];
     fileList.setFileList(newFileList);
     updateUI();
   }
-  // 全てダウンロード
+
+  // ダウンロードボタンの処理
   if (event.target === dom.downloadAllBtn) {
-    // 状態管理用配列を取得
     const currentFiles = fileList.getFileList();
-    download.downloadFilesAsZip(currentFiles);
+    const convertedFiles = currentFiles.filter((file) => file.status === "converted");
+    download.downloadFilesAsZip(convertedFiles);
   }
-}
 
-// 全て変換
-async function handleConvertAllFiles(event) {
+  // 変換ボタンの処理
   if (event.target === dom.convertAllBtn) {
-    // 状態管理用配列を取得
     const currentList = fileList.getFileList();
-    // フォーマット形式を取得
-    const format = dom.formatAllSelect.value;
+    const format = dom.formatInputForm.formatSelect.value;
 
-    // pendingのファイルを更新してUIを反映
-    // pendingが無い場合処理を終了
-    const filesToConvert = currentList.filter((file) => file.status === "pending");
-    if (filesToConvert.length === 0) {
+    const pendingFiles = currentList.filter((file) => file.status === "pending");
+    if (pendingFiles.length === 0) {
       return;
     }
 
-    // ファイルのステータスを変更
-    const processingFiles = currentList.map((file) =>
+    const filesToConvert = currentList.map((file) =>
       file.status === "pending" ? { ...file, status: "converting" } : file
     );
 
-    //UIを更新
-    fileList.setFileList(processingFiles);
+    fileList.setFileList(filesToConvert);
     updateUI();
 
-    // 一括変換処理を呼び出す
-    const newFileList = await convert.convertAllImage(processingFiles, format);
+    const convertedFiles = await convert.convertAllImage(filesToConvert, format);
 
-    // リストを更新
-    console.log(newFileList);
-    fileList.setFileList(newFileList);
+    fileList.setFileList(convertedFiles);
     updateUI();
   }
 }
 
-// イベントリスナー関数
+/**
+ * 各HTML要素にイベントを設定
+ */
 function eventListener() {
   dom.imageInput.addEventListener("change", handleFileSelect);
   dom.listContainer.addEventListener("click", handleActionFile);
-  dom.bulkAction.addEventListener("click", handleBulkAction);
-  dom.convertAllBtn.addEventListener("click", handleConvertAllFiles);
+  dom.mainContents.addEventListener("click", handleBulkAction);
 }
 
-// 初期化用の関数
+/**
+ * 初期化を行う
+ */
 function initialize() {
   eventListener();
   updateUI();
 }
 
-// 初期化
 initialize();
