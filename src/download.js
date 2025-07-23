@@ -15,7 +15,7 @@ export function downloadImage(convertedFile) {
   a.href = convertedFile.convertedDataUrl;
   a.download = convertedFile.convertedName;
 
-  a.click();
+  console.log(a);
 }
 
 /**
